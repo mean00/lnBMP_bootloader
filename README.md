@@ -1,5 +1,5 @@
 
-lnDSO bootloader
+lnBMP bootloader
 ================
 This is a modified version of STM32F103 DFU bootloader for the lnBMP project.
 Changes :
