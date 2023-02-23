@@ -92,7 +92,9 @@ int main(void)
 			volatile uint32_t *_csb_vtor = (uint32_t*)0xE000ED08U;
 			*_csb_vtor = APP_ADDRESS & 0xFFFF;
 			// Initialise master stack pointer.
-			__asm__ volatile("msr msp, %0"::"g"
+			__asm__ volatile("ldr r12, %0\n"
+			                 "msr msp, r12\n"
+                            ::"g"
 					 (*(volatile uint32_t *)APP_ADDRESS));
 			// Jump to application.
 			(*(void (**)())(APP_ADDRESS + 4))();		

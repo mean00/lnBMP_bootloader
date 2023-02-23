@@ -10,6 +10,7 @@ MESSAGE(STATUS "=====================")
 #____________
 SET(AF_FOLDER  ${CMAKE_SOURCE_DIR}/)
 OPTION(USE_GD32F3 "Build for USE_GD32F303" OFF)
+SET(LN_CUSTOM_LD_SCRIPT ${CMAKE_BINARY_DIR}/linker_script.ld)
 include(./mcuSelect.cmake)
 
 SET(USE_CLANG True CACHE INTERNAL "")
@@ -22,11 +23,10 @@ ADD_DEFINITIONS("-DXXH_NO_STDLIB  -DXXH_NO_XXH3 -DXXH_NO_LONG_LONG -DXXH_NO_STRE
 
 ADD_DEFINITIONS("-DLN_MCU_SPEED=${LN_MCU_SPEED}")
 
-SET(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/toolchain_arm_gd32fx.cmake CACHE INTERNAL "")
+SET(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/toolchain_arm_gd32fx_clang.cmake CACHE INTERNAL "")
 SET(CMAKE_C_COMPILER_FORCED TRUE CACHE INTERNAL "")
 SET(CMAKE_CXX_COMPILER_FORCED TRUE CACHE INTERNAL "")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake CACHE INTERNAL "")
-SET(LN_CUSTOM_LD_SCRIPT ${CMAKE_SOURCE_DIR}/linker_script.ld)
 
 #____________
 SET(BOOTLOADER_SIZE 8)
@@ -34,6 +34,7 @@ math(EXPR APP_START    "0x8000000" OUTPUT_FORMAT HEXADECIMAL )
 math(EXPR PAYLOAD_SIZE "${LN_MCU_FLASH_SIZE}-${BOOTLOADER_SIZE}-${LN_MCU_EEPROM_SIZE}")  
 
 configure_file(flash_config.h.in flash_config.h @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/clang.lld.in ${CMAKE_BINARY_DIR}/linker_script.ld  @ONLY)
 PROJECT(lnDSOBootloader NONE) # the NONE is very important !
 enable_language(C CXX ASM) # this is important too!
 #
@@ -57,14 +58,19 @@ add_library(miniLnArduino STATIC lnArduino_mini/systemHelper.cpp
     lnArduino_mini/systemAlloc.cpp
     lnArduino_mini/lnRCU.cpp 
     lnArduino_mini/lnIRQ_arm_gd32fx.cpp)
-GENERATE_GD32_FIRMWARE(lnDSO_Bootloader src/main.cpp src/usb.cpp 
+GENERATE_GD32_FIRMWARE(lnBMP_bootloader src/main.cpp src/usb.cpp 
                 src/xxhash.c arm_gd32fx/start.cpp src/stubs.cpp 
                 src/dfu.cpp 
                 src/reboot.cpp
                 )
 
                 
-target_link_libraries(lnDSO_Bootloader  miniLnArduino)
+target_link_libraries(lnBMP_bootloader  miniLnArduino)
+#
+#SET(SCRIPT ${LN_CUSTOM_LD_SCRIPT} CACHE INTERNAL "")
+
+#TARGET_LINK_OPTIONS(lnBMP_bootloader PRIVATE "-T${SCRIPT}")
+
 #
 #
 
@@ -72,8 +78,8 @@ MESSAGE(STATUS "Configured for ${LN_MCU}")
 MESSAGE(STATUS "Total Flash ${LN_MCU_FLASH_SIZE}")
 
 IF(USE_GD32F3)
-    set_target_properties(lnDSO_Bootloader PROPERTIES OUTPUT_NAME lnDSO_Bootloader_GD32F303)
+    set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_GD32F303)
 ELSE(USE_GD32F3)    
-    set_target_properties(lnDSO_Bootloader PROPERTIES OUTPUT_NAME lnDSO_Bootloader_STM32F103)
+    set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_STM32F103)
 ENDIF(USE_GD32F3)
 

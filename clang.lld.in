@@ -21,10 +21,10 @@
  */
 MEMORY
 {
-  ram (rwx) :       ORIGIN = 0x20000010, LENGTH = 20K-0x10
-  bootloader (rx):  ORIGIN = 0x08000000, LENGTH = 0K
-  rom (rx)  :       ORIGIN = 0x08000000, LENGTH = 128K
-  e2prom (rx)  :    ORIGIN = 0x08000000+128K, LENGTH = 0K
+  ram (rwx) :       ORIGIN = 0x20000000, LENGTH = @LN_MCU_RAM_SIZE@K
+  bootloader (rx):  ORIGIN = 0x08000000, LENGTH = @LN_BOOTLOADER_SIZE@K
+  rom (rx)  :       ORIGIN = 0x08000000+@LN_BOOTLOADER_SIZE@K, LENGTH = @LN_MCU_FLASH_SIZE@K-@LN_MCU_EEPROM_SIZE@K-@LN_BOOTLOADER_SIZE@K
+  e2prom (rx)  :    ORIGIN = 0x08000000+@LN_MCU_FLASH_SIZE@K-@LN_MCU_EEPROM_SIZE@K, LENGTH = @LN_MCU_EEPROM_SIZE@K
 }
 /**
     we allocate 4 kB at the end for the eeprom
@@ -56,8 +56,8 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
  * archives by putting the right extra_libs.inc (in a directory under
  * toolchains/) in our search path.
  */
-GROUP(libgcc.a libc.a libm.a)
-GROUP(libnosys.a)
+GROUP(libc.a libm.a)
+/* GROUP(libnosys.a) */
 
 /*
  * These force the linker to search for vector table symbols.
@@ -200,12 +200,13 @@ SECTIONS
          * I'm shoving these here naively; there's probably a cleaner way
          * to go about this. [mbolivar]
          */
-        _lm_heap_start = DEFINED(_lm_heap_start) ? _lm_heap_start : _end;
-        _lm_heap_end   = DEFINED(_lm_heap_end) ? _lm_heap_end : __msp_init;
-      } > REGION_RODATA
+        /*_lm_heap_start = DEFINED(_lm_heap_start) ? _lm_heap_start : _end;*/
+        /*_lm_heap_end   = DEFINED(_lm_heap_end) ? _lm_heap_end : __msp_init;*/
+       } 
+        > REGION_RODATA
     .eeprom eeprom_begin :
       {
-        . = eeprom_size;
+        . = ALIGN(4); /*eeprom_size;*/
       } > REGION_EEPROM
 
     /*
