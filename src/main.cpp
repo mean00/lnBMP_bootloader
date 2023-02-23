@@ -51,8 +51,8 @@ int main(void)
 	
 
 	uint32_t sig= base_addr[0];
-	uint32_t imageSize = base_addr[2];
-	uint32_t checksum=	base_addr[3];	
+	uint32_t imageSize = base_addr[6];
+	uint32_t checksum=	base_addr[7];	
 	
 	go_dfu=0;
 	go_dfu = rebooted_into_dfu();

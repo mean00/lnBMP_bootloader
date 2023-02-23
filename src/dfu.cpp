@@ -35,7 +35,7 @@ static char serial_no[25];
 #define STR(x) STR_HELPER(x)
 const char *  _usb_strings[5] = {
 	"davidgf.net (libopencm3 based)", // iManufacturer
-	"lnDSO bootloader [" VERSION "]", // iProduct
+	"lnBMP bootloader [" VERSION "]", // iProduct
 	serial_no, // iSerialNumber
 	// Interface desc string
 	/* This string is used by ST Microelectronics' DfuSe utility. */
@@ -62,12 +62,12 @@ const char *  _usb_strings[5] = {
 static const char hcharset[16+1] = "0123456789abcdef";
 static void get_dev_unique_id(char *s) {
 	volatile uint8_t *unique_id = (volatile uint8_t *)0x1FFFF7E8;
-	s[0]='D';
-	s[1]='S';
-	s[2]='O';
-	s[3]='1';
-	s[4]='5';
-	s[5]='0';
+	s[0]='L';
+	s[1]='N';
+	s[2]='B';
+	s[3]='M';
+	s[4]='P';
+	s[5]='_';
 	/* Fetch serial number from chip's unique ID */
 	for (int i = 6; i < 24; i += 2) {
 		s[i]   = hcharset[(*unique_id >> 4) & 0xF];
