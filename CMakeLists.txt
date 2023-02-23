@@ -12,7 +12,7 @@ SET(AF_FOLDER  ${CMAKE_SOURCE_DIR}/)
 OPTION(USE_GD32F3 "Build for USE_GD32F303" OFF)
 include(./mcuSelect.cmake)
 
-SET(LN_USE_CLANG True CACHE INTERNAL "")
+SET(USE_CLANG True CACHE INTERNAL "")
 SET(LN_LTO "-flto" CACHE INTERNAL "")
 
 ADD_DEFINITIONS(" -fno-builtin-memcpy ")
