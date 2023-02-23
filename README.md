@@ -5,7 +5,7 @@ This is a modified version of STM32F103 DFU bootloader for the lnBMP project.
 Changes :
 * Press the "OK" button to force DFU
 * Signature is at the beginning of the RAM to reboot to DFU
-* Extended to 16kB max size
+* Extended to 8kB max size
 * Cmake based build system derived from lnArduino
 * Firmware is xxhashed for integrity check
 
