@@ -383,12 +383,17 @@ void setupForUsb()
  * 
  */
 extern volatile uint32_t sysTick;
-
+#define LED  PC13
+#define LED2 PA8
 void runDfu()
 {
 	int nextTick=sysTick+100;
 	get_dev_unique_id(serial_no);
 	usb_init();
+	lnPinMode(LED,    lnOUTPUT);
+	lnPinMode(LED2,   lnOUTPUT);
+	bool led=false;
+
 	while (1) {
 		// Poll based approach
 		do_usb_poll();
@@ -399,6 +404,9 @@ void runDfu()
 		if(sysTick>nextTick)
 		{
 			nextTick+=100;
+			lnDigitalWrite(LED, led);
+			lnDigitalWrite(LED2,led);
+			led=!led;
 		}
 	}
 }

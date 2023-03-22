@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2018 David Guillen Fandos <david@davidgf.net>
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
- */
+* Copyright (C) 2018 David Guillen Fandos <david@davidgf.net>
+*
+* This program is free software: you can redistribute it and/or
+* modify it under the terms of the GNU General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+* General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see
+* <http://www.gnu.org/licenses/>.
+*/
 
 
 /*
@@ -37,6 +37,7 @@
 void runDfu();
 void setupForUsb();
 void lnExtiSWDOnly();
+
 #define FORCE_DFU_IO PB7
 
 
@@ -56,17 +57,18 @@ int main(void)
 	
 	go_dfu=0;
 	go_dfu = rebooted_into_dfu();
-    // Activate GPIO B for now
-    lnPeripherals::enable(pGPIOB);
-  	lnPeripherals::enable(pAF);
+	// Activate GPIO B for now
+	lnPeripherals::enable(pGPIOB);
+	lnPeripherals::enable(pGPIOC);
+	lnPeripherals::enable(pAF);
 	lnExtiSWDOnly();
 
-    lnPinMode(FORCE_DFU_IO,    lnINPUT_PULLUP);
+	lnPinMode(FORCE_DFU_IO,    lnINPUT_PULLUP);
 	if(!lnDigitalRead(FORCE_DFU_IO)) // "OK" Key pressed
 		go_dfu|=1; 
 	
 	if(!go_dfu && ( sig >>20) != 0x200)
-	 	go_dfu|=2;
+		go_dfu|=2;
 	RCC_CSR |= RCC_CSR_RMVF; // Clear reset flag
 
 	if(!go_dfu)
@@ -93,9 +95,9 @@ int main(void)
 			*_csb_vtor = APP_ADDRESS & 0xFFFF;
 			// Initialise master stack pointer.
 			__asm__ volatile("ldr r12, %0\n"
-			                 "msr msp, r12\n"
-                            ::"g"
-					 (*(volatile uint32_t *)APP_ADDRESS));
+							"msr msp, r12\n"
+							::"g"
+					(*(volatile uint32_t *)APP_ADDRESS));
 			// Jump to application.
 			(*(void (**)())(APP_ADDRESS + 4))();		
 	}
