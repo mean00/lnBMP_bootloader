@@ -441,7 +441,7 @@ enum usb_language_id {
  */
 #define TOG_SET_REG_BIT_MSK_AND_SET(REG, MSK, BIT, EXTRA_BITS)		\
 do {									\
-	register uint16_t toggle_mask = GET_REG(REG) & (MSK);		\
+	volatile uint16_t toggle_mask = GET_REG(REG) & (MSK);		\
 	toggle_mask ^= BIT;						\
 	SET_REG((REG), toggle_mask | (EXTRA_BITS));			\
 } while (0)

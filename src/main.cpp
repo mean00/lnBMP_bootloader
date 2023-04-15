@@ -64,6 +64,8 @@ int main(void)
 	lnExtiSWDOnly();
 
 	lnPinMode(FORCE_DFU_IO,    lnINPUT_PULLUP);
+	for(int i=0;i<10;i++) // wait  a bit
+		__asm__("nop");
 	if(!lnDigitalRead(FORCE_DFU_IO)) // "OK" Key pressed
 		go_dfu|=1; 
 	
@@ -72,17 +74,19 @@ int main(void)
 	RCC_CSR |= RCC_CSR_RMVF; // Clear reset flag
 
 	if(!go_dfu)
-	if(imageSize<256*1024) // Check hash of app is correct
 	{
-		if(imageSize!=0x1234 || checksum!=0x5678)	 // valid but no hash, we accept that too
+		if(imageSize<256*1024) // Check hash of app is correct
 		{
-			uint32_t computed=	XXH32 (&(base_addr[4]),imageSize,0x100);
-			if(computed!=checksum)
-				go_dfu|=4;
+			if(imageSize!=0x1234 || checksum!=0x5678)	 // valid but no hash, we accept that too
+			{
+				uint32_t computed=	XXH32 (&(base_addr[4]),imageSize,0x100);
+				if(computed!=checksum)
+					go_dfu|=4;
+			}
+		}else
+		{
+			go_dfu=1; // absurd size
 		}
-	}else
-	{
-		go_dfu=1; // absurd size
 	}
 	clear_reboot_flags();
 	//go_dfu=1;

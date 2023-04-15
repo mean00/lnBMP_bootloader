@@ -29,7 +29,7 @@ static struct {
 } prog;
 
 // Serial number to expose via USB
-static char serial_no[25];
+static char serial_no[26];
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -69,10 +69,14 @@ static void get_dev_unique_id(char *s) {
 	s[4]='P';
 	s[5]='_';
 	/* Fetch serial number from chip's unique ID */
-	for (int i = 6; i < 24; i += 2) {
-		s[i]   = hcharset[(*unique_id >> 4) & 0xF];
-		s[i+1] = hcharset[*unique_id++ & 0xF];
+	for (int i = 6; i < 24; i += 2) 
+	{
+		uint8_t cid = *unique_id++;
+		s[i]   = hcharset[(cid >> 4) & 0xF];
+		s[i+1] = hcharset[cid & 0xF];
 	}
+	s[24]=0;
+	s[25]=0;
 }
 
 static uint8_t usbdfu_getstatus(uint32_t *bwPollTimeout) {
@@ -334,7 +338,10 @@ void clock_setup_in_hse_8mhz_out_72mhz() {
 
 	/* Enable PLL oscillator and wait for it to stabilize. */
     RCC_CR |= RCC_CR_PLLON;
-	while (!(RCC_CR & RCC_CR_PLLRDY));
+	while (!(RCC_CR & RCC_CR_PLLRDY))
+	{
+		__asm__("nop");
+	}
 
 	// Select PLL as SYSCLK source.
     RCC_CFGR = (RCC_CFGR & ~RCC_CFGR_SW) | (RCC_CFGR_SW_SYSCLKSEL_PLLCLK << RCC_CFGR_SW_SHIFT);
@@ -352,6 +359,7 @@ void clock_setup_in_hse_8mhz_out_72mhz() {
 /**
  * 
  */
+extern volatile uint32_t sysTick;
 void setupForUsb()
 {
 	clock_setup_in_hse_8mhz_out_72mhz();
@@ -360,6 +368,7 @@ void setupForUsb()
     lnPeripherals::enable(pGPIOC);
 	lnPeripherals::enable(pAF);
 	// start tick interrupt
+	sysTick=0;
     portNVIC_SYSTICK_CTRL_REG = 0UL;
     portNVIC_SYSTICK_CURRENT_VALUE_REG = 0UL;
 
@@ -385,15 +394,17 @@ void setupForUsb()
 extern volatile uint32_t sysTick;
 #define LED  PC13
 #define LED2 PA8
+volatile int nextTick=0;
 void runDfu()
 {
-	int nextTick=sysTick+100;
+	
 	get_dev_unique_id(serial_no);
 	usb_init();
+	
 	lnPinMode(LED,    lnOUTPUT);
 	lnPinMode(LED2,   lnOUTPUT);
 	bool led=false;
-
+	nextTick=sysTick+100;
 	while (1) {
 		// Poll based approach
 		do_usb_poll();

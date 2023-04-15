@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "usb.h"
-
+#include "usb_vid_pid.h"
 // Defined in main
 extern uint8_t usbd_control_buffer[1024];
 extern const char * const _usb_strings[5];
@@ -29,8 +29,8 @@ const struct usb_device_descriptor dev_desc = {
 	.bDeviceSubClass = 0,
 	.bDeviceProtocol = 0,
 	.bMaxPacketSize0 = 64,
-	.idVendor = 0x1d50,
-	.idProduct = 0x6030,
+	.idVendor = BL_VENDOR_ID, // 0x1d50,
+	.idProduct = BL_PRODUCT_ID, //0x6030,
 	.bcdDevice = 0x0200,
 	.iManufacturer = 1,
 	.iProduct = 2,
@@ -93,13 +93,25 @@ struct usb_setup_data usb_req;
 uint8_t usb_force_nak[8] = {0};
 void (*usb_complete_cb)(struct usb_setup_data *req) = 0;
 
-#define RCC_APB1ENR  (*(volatile uint32_t*)0x4002101CU)
+#define LN_RCU_ADR      (0x40021000)
+
+#define RCC_APB1ENR  (*(volatile uint32_t*)(LN_RCU_ADR+0x1C))
+#define RCC_APB1RST  (*(volatile uint32_t*)(LN_RCU_ADR+0x10))
 #define RCC_USB   23
 
-#define rcc_periph_enable(pn) RCC_APB1ENR |= (1 << (pn));
+#define rcc_periph_enable(pn) {RCC_APB1ENR |= (1 << (pn));};
 
-void usb_init() {
+#define WAIT_A_BIT() {for(int i=0;i<100;i++) { __asm__("nop");}}
+
+void usb_init() 
+{
 	rcc_periph_enable(RCC_USB);
+	WAIT_A_BIT();
+	RCC_APB1RST |= (1<<23); // reset
+	WAIT_A_BIT();
+	RCC_APB1RST &= ~(1<<23); // reset
+
+
 	SET_REG(USB_CNTR_REG, 0);
 	SET_REG(USB_BTABLE_REG, 0);
 	SET_REG(USB_ISTR_REG, 0);

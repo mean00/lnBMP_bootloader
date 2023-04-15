@@ -26,6 +26,7 @@ void xDelay(int ms)
 	{
 		if(sysTick>tgt) 
 			return;
+		__asm__("nop");
 	}
 }
 extern "C" void delay(int ms)
