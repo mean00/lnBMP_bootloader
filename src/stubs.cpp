@@ -48,7 +48,38 @@ extern "C" void deadEnd(int z)
 {
     while(1){}
 }
-
+bool FMC_hasFastUnlock()
+{
+	return false;
+}
+int xstrlen(const char *src)
+{
+	int nb=0;
+	while(src[nb])
+	{
+		nb++;
+	}
+	return nb;
+}
+void xstrcpy(char *tgt, const char *src)
+{
+	while(*src)
+	{
+		*tgt=*src;
+		tgt++;src++;
+	}
+	*tgt=0;
+}
+void xstrcat(char *tgt, const char *src)
+{
+	tgt+=xstrlen(tgt);
+	while(*src)
+	{
+		*tgt=*src;
+		tgt++;src++;
+	}
+	*tgt=0;
+}
 
 // Implement this here to save space, quite minimalistic :D
 void *memcpy(void * dst, const void * src, size_t count) {

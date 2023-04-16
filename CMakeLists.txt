@@ -9,7 +9,7 @@ MESSAGE(STATUS "|Starting BootLoader|")
 MESSAGE(STATUS "=====================")
 #____________
 SET(AF_FOLDER  ${CMAKE_SOURCE_DIR}/)
-OPTION(USE_GD32F3 "Build for USE_GD32F303" OFF)
+# Not needed flash size is auto detected OPTION(USE_GD32F3 "Build for USE_GD32F303" OFF)
 SET(LN_CUSTOM_LD_SCRIPT ${CMAKE_BINARY_DIR}/linker_script.ld)
 include(./mcuSelect.cmake)
 
@@ -22,6 +22,7 @@ ADD_DEFINITIONS("-DENABLE_CHECKSUM")
 ADD_DEFINITIONS("-DXXH_NO_STDLIB  -DXXH_NO_XXH3 -DXXH_NO_LONG_LONG -DXXH_NO_STREAM") 
 
 ADD_DEFINITIONS("-DLN_MCU_SPEED=${LN_MCU_SPEED}")
+#ADD_DEFINITIONS("-O0 -g3")
 
 SET(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/toolchain_arm_gd32fx_clang.cmake CACHE INTERNAL "")
 SET(CMAKE_C_COMPILER_FORCED TRUE CACHE INTERNAL "")
@@ -57,7 +58,10 @@ add_library(miniLnArduino STATIC lnArduino_mini/systemHelper.cpp
     lnArduino_mini/lnGPIO.cpp 
     lnArduino_mini/systemAlloc.cpp
     lnArduino_mini/lnRCU.cpp 
+    lnArduino_mini/lnCpuID_arm_gd32fx.cpp
     lnArduino_mini/lnIRQ_arm_gd32fx.cpp)
+
+
 GENERATE_GD32_FIRMWARE(lnBMP_bootloader src/main.cpp src/usb.cpp 
                 src/xxhash.c arm_gd32fx/start.cpp src/stubs.cpp 
                 src/dfu.cpp 
@@ -76,10 +80,11 @@ target_link_libraries(lnBMP_bootloader  miniLnArduino)
 
 MESSAGE(STATUS "Configured for ${LN_MCU}")
 MESSAGE(STATUS "Total Flash ${LN_MCU_FLASH_SIZE}")
+set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_arm)
 
-IF(USE_GD32F3)
-    set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_GD32F303)
-ELSE(USE_GD32F3)    
-    set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_STM32F103)
-ENDIF(USE_GD32F3)
+#IF(USE_GD32F3)
+#set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_GD32F303)
+#ELSE(USE_GD32F3)    
+#set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_STM32F103)
+#ENDIF(USE_GD32F3)
 

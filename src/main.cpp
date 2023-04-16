@@ -33,6 +33,7 @@
 #include "lnArduino.h"
 
 #include "registers.h"
+#include "lnCpuID.h"
 
 void runDfu();
 void setupForUsb();
@@ -41,7 +42,7 @@ void lnExtiSWDOnly();
 #define FORCE_DFU_IO PB7
 
 
-uint32_t go_dfu;
+uint32_t go_dfu=0;
 
 
 
@@ -72,6 +73,8 @@ int main(void)
 	if(!go_dfu && ( sig >>20) != 0x200)
 		go_dfu|=2;
 	RCC_CSR |= RCC_CSR_RMVF; // Clear reset flag
+
+	lnCpuID::identify();
 
 	if(!go_dfu)
 	{

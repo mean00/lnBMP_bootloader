@@ -7,6 +7,8 @@
 #include "registers.h"
 #include "flash_config.h"
 #include "reboot.h"
+#include "lnCpuID.h"
+#include "usb_vid_pid.h"
 /* Commands sent with wBlockNum == 0 as per ST implementation. */
 #define CMD_SETADDR	0x21
 #define CMD_ERASE	0x41
@@ -30,6 +32,10 @@ static struct {
 
 // Serial number to expose via USB
 static char serial_no[26];
+static char memory_layout[64]; // actual size is ~ 50
+
+
+
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -40,9 +46,7 @@ const char *  _usb_strings[5] = {
 	// Interface desc string
 	/* This string is used by ST Microelectronics' DfuSe utility. */
 	/* Change check_do_erase() accordingly */
-	"@Internal Flash /0x08000000/"
-	  STR(FLASH_BOOTLDR_SIZE_KB) "*001Ka,"
-	  STR(FLASH_BOOTLDR_PAYLOAD_SIZE_KB) "*001Kg",
+	memory_layout,
 	// Config desc string
 	"Bootloader config: "
 	#ifdef ENABLE_WATCHDOG
@@ -58,7 +62,27 @@ const char *  _usb_strings[5] = {
 	"FW-CRC "
 	#endif
 };
+extern void xstrcpy(char *tgt, const char *src);
+extern void xstrcat(char *tgt, const char *src);
+static void prepare_memory_layout()
+{	
+	int flash_size = lnCpuID::flashSize();
+	const char *s;
+	switch(flash_size)
+	{
+		case 64 : s="52";break; // 64-8-4		
+		case 256 : s="244";break; // 64-8-4
+		default:
+		case 128 : s="116";break; // 64-8-4
+	}
 
+
+	xstrcpy(memory_layout,"@Internal Flash /0x08000000/");
+	xstrcat(memory_layout , BOOTLOADER_SIZE_STR);	
+	xstrcat(memory_layout,"*001Ka,");
+	xstrcat(memory_layout,s); //"116");
+	xstrcat(memory_layout,"*001Kg");
+}
 static const char hcharset[16+1] = "0123456789abcdef";
 static void get_dev_unique_id(char *s) {
 	volatile uint8_t *unique_id = (volatile uint8_t *)0x1FFFF7E8;
@@ -378,14 +402,7 @@ void setupForUsb()
 
 	/* Disable USB peripheral as it overrides GPIO settings */
 	*USB_CNTR_REG = USB_CNTR_PWDN;
-	/*
-	 * Vile hack to reenumerate, physically _drag_ d+ low.
-	 * (need at least 2.5us to trigger usb disconnect)
-	 */
-	lnPinMode(PA12,lnOUTPUT);
-	lnDigitalWrite(PA12,0);
-	xDelay(100);
-	lnDigitalWrite(PA12,1);
+	
 
 }
 /**
@@ -398,7 +415,21 @@ volatile int nextTick=0;
 void runDfu()
 {
 	
+/*
+	 * Vile hack to reenumerate, physically _drag_ d+ low.
+	 * (need at least 2.5us to trigger usb disconnect)
+	 */
+	lnPinMode(PA12,lnOUTPUT);
+	//lnPinMode(PA11,lnINPUT_PULLDOWN);
+	//xDelay(1000);
+	//lnPinMode(PA12,lnOUTPUT);
+	//lnDigitalWrite(PA12,1);
+	lnDigitalWrite(PA12,0);
+	xDelay(300);
+	lnDigitalWrite(PA12,1);
+
 	get_dev_unique_id(serial_no);
+	prepare_memory_layout();
 	usb_init();
 	
 	lnPinMode(LED,    lnOUTPUT);
