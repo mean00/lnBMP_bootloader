@@ -62,6 +62,8 @@ extern "C"
     
 }
 
+#define RAM(offset) (*(uint32_t *)(0x20000000 +offset))
+
 /**
  * \fn start_c
  * \brief Initialize ram & libc runtime before jumping into actual code
@@ -74,6 +76,10 @@ extern "C" void  __attribute__((noreturn))  start_c(void)
     volatile uint32_t *dst = (volatile uint32_t*)&__data_start__;
     volatile uint32_t *end = (volatile uint32_t*)&__data_end__;
 
+    // preserve beginning of ram
+    volatile uint32_t ram0=RAM(0);
+    volatile uint32_t ram1=RAM(4);
+
     while (dst < end) 
     {
             *dst++ = *src++;
@@ -82,7 +88,7 @@ extern "C" void  __attribute__((noreturn))  start_c(void)
     /* Zero .bss. */
     volatile uint32_t *zstart = (volatile uint32_t*)&__bss_start__;
     volatile uint32_t *zend =   (volatile uint32_t*)&__bss_end__;
-    zstart+=8; // skip signature
+    
     while (zstart < zend) 
     {
         *zstart++ = 0;
@@ -90,6 +96,10 @@ extern "C" void  __attribute__((noreturn))  start_c(void)
 
     /* Run initializers. */
     __libc_init_array();
+    // restore beginning of ram
+    RAM(0) = ram0;
+    RAM(4) = ram1;
+
     main();
     xAssert(0);
     for (;;)
