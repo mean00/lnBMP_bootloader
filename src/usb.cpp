@@ -111,8 +111,16 @@ void usb_init()
 	WAIT_A_BIT();
 	RCC_APB1RST &= ~(1<<23); // reset
 
-
+	// clear close
+	*USB_CNTR_REG &=~2;
+	WAIT_A_BIT();
+	/// clear reset
+	*USB_CNTR_REG &=~1;
+	//
+	WAIT_A_BIT();
+	// go
 	SET_REG(USB_CNTR_REG, 0);
+	WAIT_A_BIT();
 	SET_REG(USB_BTABLE_REG, 0);
 	SET_REG(USB_ISTR_REG, 0);
 
