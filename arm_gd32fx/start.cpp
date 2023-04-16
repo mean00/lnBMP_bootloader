@@ -43,11 +43,9 @@
  */
 
 #include <stddef.h>
-#include <stdint.h>
-
+#include "lnArduino.h"
 
 extern int  main(void);
-extern "C" void deadEnd(int z);
 
 extern "C"
 {
@@ -72,9 +70,9 @@ extern "C"
 extern "C" void  __attribute__((noreturn))  start_c(void)
 {
     uint32_t srcAdr= *(uint32_t *)(&_lm_rom_img_cfgp);
-    uint32_t *src = (uint32_t *)srcAdr;
-    uint32_t *dst = (uint32_t*)&__data_start__;
-    uint32_t *end = (uint32_t*)&__data_end__;
+    volatile uint32_t *src = (volatile uint32_t *)srcAdr;
+    volatile uint32_t *dst = (volatile uint32_t*)&__data_start__;
+    volatile uint32_t *end = (volatile uint32_t*)&__data_end__;
 
     while (dst < end) 
     {
@@ -82,8 +80,9 @@ extern "C" void  __attribute__((noreturn))  start_c(void)
     }
     
     /* Zero .bss. */
-    uint32_t *zstart = (uint32_t*)&__bss_start__;
-    uint32_t *zend =   (uint32_t*)&__bss_end__;
+    volatile uint32_t *zstart = (volatile uint32_t*)&__bss_start__;
+    volatile uint32_t *zend =   (volatile uint32_t*)&__bss_end__;
+    zstart+=8; // skip signature
     while (zstart < zend) 
     {
         *zstart++ = 0;
@@ -92,14 +91,14 @@ extern "C" void  __attribute__((noreturn))  start_c(void)
     /* Run initializers. */
     __libc_init_array();
     main();
-    
+    xAssert(0);
     for (;;)
         continue;
 
 }
-
 extern "C" void fault()
 {
     deadEnd(5);
 }
+
 // EOF
