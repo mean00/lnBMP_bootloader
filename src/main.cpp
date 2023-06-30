@@ -39,7 +39,7 @@ void runDfu();
 void setupForUsb();
 void lnExtiSWDOnly();
 
-#define FORCE_DFU_IO PB7
+#define FORCE_DFU_IO PB14
 
 
 uint32_t go_dfu=0;
@@ -53,8 +53,8 @@ int main(void)
 	
 
 	uint32_t sig= base_addr[0];
-	uint32_t imageSize = base_addr[6];
-	uint32_t checksum=	base_addr[7];	
+	uint32_t imageSize = base_addr[2];
+	uint32_t checksum=	base_addr[3];	
 	
 	go_dfu=0;
 	go_dfu = rebooted_into_dfu();
@@ -99,7 +99,7 @@ int main(void)
 			
 			// Set vector table base address.
 			volatile uint32_t *_csb_vtor = (uint32_t*)0xE000ED08U;
-			*_csb_vtor = APP_ADDRESS & 0xFFFF;
+			*_csb_vtor = APP_ADDRESS & (~0xF);
 			// Initialise master stack pointer.
 			__asm__ volatile("ldr r12, %0\n"
 							"msr msp, r12\n"
