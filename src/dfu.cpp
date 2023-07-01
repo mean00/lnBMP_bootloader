@@ -132,8 +132,9 @@ static void usbdfu_getstatus_complete(struct usb_setup_data *req) {
 	(void)req;
 
 	// Protect the flash by only writing to the valid flash area
+	const int flash_size=lnCpuID::flashSize(); // in kB
 	const uint32_t start_addr = 0x08000000 + (FLASH_BOOTLDR_SIZE_KB*1024);
-	const uint32_t end_addr   = 0x08000000 + (        FLASH_SIZE_KB*1024);
+	const uint32_t end_addr   = 0x08000000 + (flash_size*1024);
 
 	switch (usbdfu_state) {
 	case STATE_DFU_DNBUSY:
