@@ -9,7 +9,10 @@
     void debugLogger(const char *fmt...);
     extern "C" void Logger(const char *fmt...);
 #else
-    #define LoggerInit() {}
-    #define Logger(...) {}
+#define LoggerInit()                                                                                                   \
+    {                                                                                                                  \
+    }
+#define Logger(...)                                                                                                    \
+    {                                                                                                                  \
+    }
 #endif
-
