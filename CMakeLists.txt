@@ -15,6 +15,11 @@ include(./mcuSelect.cmake)
 
 SET(USE_CLANG True CACHE INTERNAL "")
 #SET(LN_LTO "-flto" CACHE INTERNAL "")
+OPTION(USE_GD32_CRYSTALLESS False "Use GD32F303 crystallless mode")
+
+IF(USE_GD32_CRYSTALLESS)
+    ADD_DEFINITIONS("-DUSE_GD32_CRYSTALLESS")     
+ENDIF(USE_GD32_CRYSTALLESS)
 
 ADD_DEFINITIONS(" -fno-builtin-memcpy ")
 ADD_DEFINITIONS("-DENABLE_CHECKSUM") 
@@ -80,7 +85,12 @@ target_link_libraries(lnBMP_bootloader  miniLnArduino)
 
 MESSAGE(STATUS "Configured for ${LN_MCU}")
 MESSAGE(STATUS "Total Flash ${LN_MCU_FLASH_SIZE}")
-set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_arm)
+
+IF(USE_GD32_CRYSTALLESS)
+    set(EXTRA_NAME "_nocrystal")
+ENDIF()
+
+set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_arm${EXTRA_NAME})
 
 #IF(USE_GD32F3)
 #set_target_properties(lnBMP_bootloader PROPERTIES OUTPUT_NAME lnBMP_bootloader_GD32F303)

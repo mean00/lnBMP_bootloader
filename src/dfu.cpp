@@ -8,6 +8,7 @@
 #include "registers.h"
 #include "usb.h"
 #include "usb_vid_pid.h"
+#include <cstdint>
 /* Commands sent with wBlockNum == 0 as per ST implementation. */
 #define CMD_SETADDR 0x21
 #define CMD_ERASE 0x41
@@ -356,7 +357,62 @@ void lnExtiSWDOnly()
     v |= 1 << 8;
     afio->PCF0 = v;
 }
+/**
+ * @brief
+ *
+ */
+void clock_setup_in_hsi_72mhz()
+{
+    /*
+     * Set prescalers for AHB, ADC, ABP1, ABP2.
+     * Do this before touching the PLL (TODO: why?).
+       Use RCI /2 as pll input = 4Mhz
+     */
+    uint32_t reg32 = RCC_CFGR & 0xFFC0000F;
+    reg32 |= (RCC_CFGR_HPRE_SYSCLK_NODIV << 4) | (RCC_CFGR_PPRE1_HCLK_DIV2 << 8) | (RCC_CFGR_PPRE2_HCLK_NODIV << 11) |
+             (RCC_CFGR_PLLMUL_PLL_CLK_MUL9 << 18) | (RCC_CFGR_PLLXTPRE_HSE_CLK << 17);
+    RCC_CFGR = reg32;
 
+    // 0WS from 0-24MHz
+    // 1WS from 24-48MHz
+    // 2WS from 48-72MHz
+    FLASH_ACR = (FLASH_ACR & ~FLASH_ACR_LATENCY) | FLASH_ACR_LATENCY_2WS;
+
+    /* Enable PLL oscillator and wait for it to stabilize. */
+    RCC_CR |= RCC_CR_PLLON;
+    while (!(RCC_CR & RCC_CR_PLLRDY))
+    {
+        __asm__("nop");
+    }
+
+    // Select PLL as SYSCLK source.
+    RCC_CFGR = (RCC_CFGR & ~RCC_CFGR_SW) | (RCC_CFGR_SW_SYSCLKSEL_PLLCLK << RCC_CFGR_SW_SHIFT);
+
+// Ok now enable the 48Mhz RC oscillator for USB
+#define LN_RCU_ADR (0x40021000)
+// This is Gigadevice specific, at least on GD32F303
+// It drives the internal 48Mhz clock that can be used
+// to drive USB in crystal less setup
+#define LN_GD_RCU_ADDCTL_IRC48M_EN (1 << 16)
+#define LN_GD_RCU_ADDCTL_IRC48M_STB (1 << 17)
+#define LN_GD_RCU_ADDCTL_IRC48M_SEL (1 << 0)
+
+    volatile uint32_t *addctl = (volatile uint32_t *)(LN_RCU_ADR + 0xc0);
+    *addctl |= LN_GD_RCU_ADDCTL_IRC48M_EN; // enable 48M
+    while (1)
+    {
+        if (*addctl & LN_GD_RCU_ADDCTL_IRC48M_STB) // clock stabilized
+        {
+            break;
+        }
+    }
+    // Use IRC48M as usb source
+    *addctl |= LN_GD_RCU_ADDCTL_IRC48M_SEL;
+}
+/**
+ * @brief
+ *
+ */
 void clock_setup_in_hse_8mhz_out_72mhz()
 {
     // No need to use HSI or HSE while setting up the PLL, just use the RC osc.
@@ -407,7 +463,11 @@ void clock_setup_in_hse_8mhz_out_72mhz()
 extern volatile uint32_t sysTick;
 void setupForUsb()
 {
+#ifdef USE_GD32_CRYSTALLESS
+    clock_setup_in_hsi_72mhz();
+#else
     clock_setup_in_hse_8mhz_out_72mhz();
+#endif
     lnPeripherals::enable(pGPIOA);
     lnPeripherals::enable(pGPIOB);
     lnPeripherals::enable(pGPIOC);
@@ -428,7 +488,11 @@ void setupForUsb()
  *
  */
 extern volatile uint32_t sysTick;
+#ifdef USE_GD32_CRYSTALLESS
+#define LED PA0
+#else
 #define LED PC13
+#endif
 #define LED2 PA8
 volatile int nextTick = 0;
 void runDfu()
