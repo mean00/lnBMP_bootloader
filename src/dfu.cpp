@@ -361,7 +361,7 @@ void lnExtiSWDOnly()
  * @brief
  *
  */
-void clock_setup_in_hsi_72mhz()
+void clock_setup_in_hsi_48mhz()
 {
     /*
      * Set prescalers for AHB, ADC, ABP1, ABP2.
@@ -464,7 +464,7 @@ extern volatile uint32_t sysTick;
 void setupForUsb()
 {
 #ifdef USE_GD32_CRYSTALLESS
-    clock_setup_in_hsi_72mhz();
+    clock_setup_in_hsi_48mhz();
 #else
     clock_setup_in_hse_8mhz_out_72mhz();
 #endif
