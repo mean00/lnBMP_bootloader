@@ -62,18 +62,52 @@ static int _flash_page_is_erased(uint32_t addr)
     return 1;
 }
 
+static void _flash_program_buffer16(uint32_t address, uint16_t *data, unsigned nb_word16)
+{
+
+    volatile uint16_t *addr_ptr = (uint16_t *)address;
+    for (unsigned i = 0; i < nb_word16; i++)
+    {
+        addr_ptr[i] = data[i];
+        _flash_wait_for_last_operation();
+    }
+}
+static void _flash_program_buffer32(uint32_t address, uint16_t *data16, unsigned nb_word32)
+{
+
+    uint32_t *data = (uint32_t *)data16;
+    volatile uint32_t *addr_ptr = (uint32_t *)address;
+    for (unsigned i = 0; i < nb_word32; i++)
+    {
+        addr_ptr[i] = data[i];
+        _flash_wait_for_last_operation();
+    }
+}
+
+extern int is_gd32();
+
 static void _flash_program_buffer(uint32_t address, uint16_t *data, unsigned len)
 {
+    int can_do_32 = is_gd32();
+
+    if (can_do_32) // only allow 32 bits write if we can do it and if the address and len are 32 bits aligned
+    {
+        if ((len & 3) || (address & 3))
+            can_do_32 = 0;
+    }
+
     _flash_wait_for_last_operation();
 
     // Enable programming
     FLASH_CR |= FLASH_CR_PG;
 
-    volatile uint16_t *addr_ptr = (uint16_t *)address;
-    for (unsigned i = 0; i < len / 2; i++)
+    if (can_do_32)
     {
-        addr_ptr[i] = data[i];
-        _flash_wait_for_last_operation();
+        _flash_program_buffer32(address, data, len / 4);
+    }
+    else
+    {
+        _flash_program_buffer16(address, data, len / 2);
     }
 
     // Disable programming

@@ -106,3 +106,11 @@ int main(void)
     setupForUsb();
     runDfu();
 }
+/**
+ * @brief
+ *
+ */
+int is_gd32(void)
+{
+    return (lnCpuID::vendor() == lnCpuID::LN_MCU_GD32);
+}
