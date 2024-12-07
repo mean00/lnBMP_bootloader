@@ -5,6 +5,7 @@
 #include "lnNVIC_arm_priv.h"
 #include "lnSCB_arm_priv.h"
 #include "sys/types.h"
+#include "unistd.h"
 
 volatile uint32_t sysTick = 0;
 
