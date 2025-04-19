@@ -39,6 +39,7 @@ void setupForUsb();
 void lnExtiSWDOnly();
 
 #define FORCE_DFU_IO PB14
+extern "C" uint32_t ch32_crc(uint32_t addr, uint32_t len_in_u32);
 
 uint32_t go_dfu = 0;
 
@@ -77,7 +78,8 @@ int main(void)
         {
             if (imageSize != 0x1234 || checksum != 0x5678) // valid but no hash, we accept that too
             {
-                uint32_t computed = XXH32(&(base_addr[4]), imageSize, 0x100);
+                uint32_t computed = ch32_crc((uint32_t)&(base_addr[4]), imageSize >> 2);
+                // uint32_t computed = XXH32(&(base_addr[4]), imageSize, 0x100);
                 if (computed != checksum)
                     go_dfu |= 4;
             }
